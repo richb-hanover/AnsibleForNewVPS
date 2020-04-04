@@ -3,9 +3,9 @@
 - hosts: all
 
   vars:
-    UBUNTU_COMMON_ROOT_PASSWORD: 'xxxxx'
-    UBUNTU_COMMON_DEPLOY_PASSWORD: 'xxxxx'
-    UBUNTU_COMMON_LOGWATCH_EMAIL: user@example.com
+    UBUNTU_COMMON_ROOT_PASSWORD: 'H1267MbMZno4' # ramdom, from Password Wallet
+    UBUNTU_COMMON_DEPLOY_PASSWORD: 'sacK3686'
+    UBUNTU_COMMON_LOGWATCH_EMAIL: richb.hanover@gmail.com
     ubuntu_common_deploy_user_name: deploy
     ubuntu_common_deploy_public_keys:
       - ~/.ssh/id_rsa.pub
@@ -26,10 +26,11 @@
 
   tasks:
     - name: Change root password
-      user: name=root password="{{ UBUNTU_COMMON_ROOT_PASSWORD }}"
-
+      user: name=root password="{{ 'H1267MbMZno4' | password_hash('sha512') }}"
+ 
     - name: Add deploy user
-      user: name={{ ubuntu_common_deploy_user_name }} password="{{ UBUNTU_COMMON_DEPLOY_PASSWORD }}" shell=/bin/bash
+      user: name={{ ubuntu_common_deploy_user_name }} password="{{ 'sacK3686' | password_hash('sha512') }}" shell=/bin/bash
+#      update_password: on_create
 
     - name: Add authorized keys for deploy user
       authorized_key: user={{ ubuntu_common_deploy_user_name }} key="{{ lookup('file', item) }}"
