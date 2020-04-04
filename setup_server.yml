@@ -18,15 +18,16 @@
 - name: Initial provisioning of server for important packages
   hosts: all
   become: yes
+  gather_facts: false
 
   vars:
     UBUNTU_COMMON_LOGWATCH_EMAIL: user@example.com
 
-    ubuntu_common_required_packages:
-      - ufw
-      - fail2ban
-      - unattended-upgrades
-      - logwatch
+    # ubuntu_common_required_packages:
+    #   - ufw
+    #   - fail2ban
+    #   - unattended-upgrades
+    #   - logwatch
 
     ubuntu_common_optional_packages:
       - mosh
@@ -44,8 +45,14 @@
       apt: upgrade=safe
 
     - name: Install required packages
-      apt: state=installed pkg={{ item }}
-      with_items: ubuntu_common_required_packages
+      apt: 
+        update_cache: yes
+        name: "{{ item }}"
+      with_items: 
+        - ufw
+        - fail2ban
+        - unattended-upgrades
+        - logwatch
 
     - name: Install optional packages
       apt: state=installed pkg={{ item }}
