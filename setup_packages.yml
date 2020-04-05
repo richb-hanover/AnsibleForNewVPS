@@ -33,8 +33,9 @@
       - mosh
       - vim
 
-    ubuntu_common_mosh_from_port: 60000
-    ubuntu_common_mosh_to_port: 60010
+    ubuntu_common_ssh_port: "22"
+    ubuntu_common_mosh_from_port: "60000"
+    ubuntu_common_mosh_to_port: "60010"
 
   tasks:
  
@@ -55,22 +56,34 @@
         - logwatch
 
     - name: Install optional packages
-      apt: state=installed pkg={{ item }}
-      with_items: ubuntu_common_optional_packages
+      apt: 
+        update_cache: yes
+        name: "{{ item }}"
+      with_items: 
+        - mosh
+        - vim
 
-    - name: Adjust APT update intervals
-      copy: src=apt_periodic dest=/etc/apt/apt.conf.d/10periodic
+# Defaults already look good  
+#    - name: Adjust APT update intervals
+#      copy: src=apt_periodic dest=/etc/apt/apt.conf.d/10periodic
 
     - name: Setup ufw
-      ufw: state=enabled policy=deny
+      ufw: 
+        state: enabled 
+        policy: deny
 
     - name: Allow ssh traffic
-      ufw: rule=allow port={{ ubuntu_common_ssh_port }} proto=tcp
+      ufw: 
+        rule: allow 
+        port: "{{ ubuntu_common_ssh_port }}"
+        proto: tcp
 
     - name: Allow mosh traffic
-      ufw: rule=allow proto=udp port={{ ubuntu_common_mosh_from_port }}:{{ ubuntu_common_mosh_to_port }}
-      when: "'mosh' in ubuntu_common_optional_packages"
-
+      ufw: 
+        rule: allow 
+        proto: udp 
+        port: "{{ ubuntu_common_mosh_from_port }}:{{ ubuntu_common_mosh_to_port }}"
+    
     - name: Set up Postfix to relay mail
       debconf: name=postfix
                question='{{ item.question }}'

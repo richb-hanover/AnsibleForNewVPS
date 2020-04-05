@@ -3,7 +3,7 @@
 # this playbook gets run once and only once for each new server.
 # it assumes the server has one user account with root privileges
 
-# Purpose: 
+# Purpose: Set Up Accounts for the server
 #  1. Log into the target server using the SSH password (not public key)
 #  2. Create a 'deploy' user, set up a SSH public key, make sudo'able
 #  3. Disallow password login for all accounts
