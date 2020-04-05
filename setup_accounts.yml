@@ -1,80 +1,101 @@
 ---
 
-# this playbook gets run once and only once for each new server.
+# Use this playbook to set up accounts on a new server. 
 # it assumes the server has one user account with root privileges
 
-# Purpose: Set Up Accounts for the server
-#  1. Log into the target server using the SSH password (not public key)
+# The script prompts (twice) for the password for the 'deploy' account
+
+# Tasks
+#  1. Log into the target server using the root SSH password (not public key)
 #  2. Create a 'deploy' user, set up a SSH public key, make sudo'able
 #  3. Disallow password login for all accounts
 #  4. Disallow root ssh access
+#  5. (Leave ssh port set to default of 22)
 
-# The following seems to be bogus in the original, and can be ignored here:
-## only changes made to server: (1) gave static ip address (2) install openssh-server 
-## if getting ssh errors during re-build using diff host with same ip address:
-## ssh-keygen -f "/home/cisco/.ssh/known_hosts" -R 192.168.1.53
-## if you use the dhcp ip to push the first few playbooks, don't forget to create add a new host file 
-
-# Provenance: Original version came from:
+# Provenance: Original ideas came from:
 # https://github.com/jedelman8/server-build-ansible/blob/master/server_one_time_run.yml
 # referred from http://jedelman.com/home/server-bootstrap-prep-with-ansible/
 # Seasoned with info from Ryan Eschinger's first-time setup
 
 ##############################################################
-# this playbook needs to be run with --ask-become-pass -k 
+# this playbook needs to be run with -k to ask for the SSH password (no public key)
 #
-# ansible-playbook -i "hostname," server_first_time.yml --ask-become-pass -k 
+# ansible-playbook -i "hostname," setup_accounts.yml -k  
+#
+# If this fails with "Please add this host's fingerprint to your known_hosts file"
+#   you need to ssh root@hostname one time to set the fingerprint. 
+#   Then re-run the playbook
 ##############################################################
 
-- name: One-time Build Process
+# 
+
+
+- name: Set Up Accounts (only run this once)
   hosts: all
   gather_facts: no
   remote_user: root
- # sudo: yes
+ 
+  vars_prompt:
+    - name: deploy_password
+      prompt: "What is the password for the 'deploy' user?"
+      private: yes
+    - name: deploy_password2
+      prompt: "  Enter the 'deploy' password one more time"
+      private: yes
 
   vars:
-    ubuntu_common_deploy_user_name: deploy
-    ubuntu_common_deploy_public_keys:
-      - ~/.ssh/id_rsa.pub
-    ubuntu_common_ssh_port: 22
+      ubuntu_common_deploy_user_name: deploy
+      ubuntu_common_deploy_public_keys:
+        - ~/.ssh/id_rsa.pub
+#      ubuntu_common_ssh_port: 22
+      hashed_password:  "{{ deploy_password | password_hash('sha512', 'secretsalt') }}"
 
   tasks:
 
-  - name: Add deploy user
-    user: name={{ ubuntu_common_deploy_user_name }} password="{{ 'sacK3686' | password_hash('sha512') }}" shell=/bin/bash
+   #check if params are valid: abort the remaining tasks if not
+  - assert: 
+      that: 
+        - deploy_password is defined
+        - deploy_password2 is defined
+        - deploy_password == deploy_password2
+      success_msg: "Passwords are OK"
+      fail_msg: "Passwords are missing or do not match"
 
-  - name: Add authorized key taken from richb public key
+  - name: 'Add deploy user'
+    user: name={{ ubuntu_common_deploy_user_name }} password="{{ hashed_password }}" shell=/bin/bash
+
+  - name: 'Add authorized key taken from richb public key'
     authorized_key:
       user: deploy
       state: present
       key: "{{ lookup('file', '/Users/richb/.ssh/id_rsa.pub') }}"
 
-  - name: Add deploy user to sudoers
+  - name: 'Add deploy user to sudoers'
     lineinfile: dest=/etc/sudoers
                   regexp="{{ ubuntu_common_deploy_user_name }} ALL"
                   line="{{ ubuntu_common_deploy_user_name }} ALL=(ALL) ALL"
                   state=present
 
-  - name: Change ssh port
-    lineinfile: dest=/etc/ssh/sshd_config
-                  regexp="^Port\s"
-                  line="Port {{ ubuntu_common_ssh_port }}"
-                  state=present
-    notify: Restart ssh
-
-  - name: Disallow password authentication
+  - name: 'Disallow password authentication'
     lineinfile: dest=/etc/ssh/sshd_config
                   regexp="^PasswordAuthentication"
                   line="PasswordAuthentication no"
                   state=present
     notify: Restart ssh
 
-  - name: Disallow root SSH access
+  - name: 'Disallow root SSH access'
     lineinfile: dest=/etc/ssh/sshd_config
                   regexp="^PermitRootLogin"
                   line="PermitRootLogin no"
                   state=present
     notify: Restart ssh
+
+  # - name: 'Change ssh port'
+  #   lineinfile: dest=/etc/ssh/sshd_config
+  #                 regexp="^Port\s"
+  #                 line="Port {{ ubuntu_common_ssh_port }}"
+  #                 state=present
+  #   notify: Restart ssh
 
   handlers:
     - name: Restart ssh

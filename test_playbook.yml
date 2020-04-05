@@ -1,0 +1,52 @@
+# Test Playbook - used to investigate Ansible commands, modules, variables
+
+# Run with:
+# ansible-playbook test_playbook.yml -i "atl3.richb-hanover.com," --ask-become-pass -u deploy
+
+# To run locally (without testing any target, comment out the "remote host" section and invoke with:
+# ansible-playbook test_playbook.yml
+
+
+ # - name: Test Playbook on remote host
+ #   hosts: all 
+ #   gather_facts: yes # Required if you're going to use "ansible_facts" or other "ansible_" variables
+
+ - name: Test Playbook locally
+   hosts: localhost # all 
+   gather_facts: no 
+
+   vars_prompt:
+    - name: deploy_password
+      prompt: "What is the password for the 'deploy' user?"
+      private: no
+    - name: deploy_password2
+      prompt: "Enter the 'deploy' password once more..."
+      private: no
+
+   vars:
+      ubuntu_common_deploy_user_name: deploy
+      hashed_password:  "{{ deploy_password | password_hash('sha512', 'secretsalt') }}"
+ 
+   tasks:
+
+#     - debug: var="{{ deploy_password }} * {{ deploy_password2 }}"
+# #        msg: "{{ hashed_password }}"
+
+    # - debug: 
+    #     msg: 
+    #       - "{{ deploy_password }} * {{ deploy_password2 }}"
+    #       - "{{ hashed_password }}"
+
+   #check if params are invalid then abort below all tasks.  
+    - name: 'check that passwords match' 
+      fail: msg="Passwords are missing or do not match"
+      when: "deploy_password is not defined or deploy_password2 is not defined or deploy_password != deploy_password2" ## whatever condition you want
+
+    - debug: 
+        msg: 
+          - 'This would happen if the passwords are OK'
+          - "Passwords are OK - proceeding..."
+
+    # - debug:
+    #     msg: System {{ inventory_hostname }} has nodename {{ ansible_facts['nodename'] }}
+

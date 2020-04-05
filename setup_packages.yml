@@ -13,7 +13,7 @@
 #   - vim
 #
 # This should also be run once, with this command:
-# ansible-playbook -i "hostname," setup_server.yml  --ask-become-pass -u deploy
+# ansible-playbook -i "hostname," setup_packages.yml --ask-become-pass -u deploy
 
 - name: Initial provisioning of server for important packages
   hosts: all
@@ -21,18 +21,7 @@
   gather_facts: false
 
   vars:
-    UBUNTU_COMMON_LOGWATCH_EMAIL: user@example.com
-
-    # ubuntu_common_required_packages:
-    #   - ufw
-    #   - fail2ban
-    #   - unattended-upgrades
-    #   - logwatch
-
-    ubuntu_common_optional_packages:
-      - mosh
-      - vim
-
+    UBUNTU_COMMON_LOGWATCH_EMAIL: "richb.hanover@gmail.com"
     ubuntu_common_ssh_port: "22"
     ubuntu_common_mosh_from_port: "60000"
     ubuntu_common_mosh_to_port: "60010"
@@ -90,7 +79,7 @@
                value='{{ item.value }}'
                vtype='{{ item.vtype }}'
       with_items:
-        - { question: 'postfix/mailname', value: '{{ ansible_fqdn }}', vtype: 'string' }
+        - { question: 'postfix/mailname', value: '{{ inventory_hostname }}', vtype: 'string' }
         - { question: 'postfix/main_mailer_type', value: 'Internet Site', vtype: 'string' }
 
     - name: Email log summary daily
