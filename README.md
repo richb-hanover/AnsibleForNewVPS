@@ -55,7 +55,7 @@ Currently, the following packages are installed/configured:
 * cron job to send daily summary of activity
 
 ```
-ansible-playbook -i "hostname," setup_packages.yml  --ask-become-pass -u deploy
+ansible-playbook -i "hostname," setup_packages.yml --ask-become-pass -u deploy
 ```
 
 ## Cool things to know about Ansible
