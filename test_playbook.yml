@@ -26,7 +26,8 @@
    vars:
       ubuntu_common_deploy_user_name: deploy
       hashed_password:  "{{ deploy_password | password_hash('sha512', 'secretsalt') }}"
- 
+      copy_local_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
    tasks:
 
 #     - debug: var="{{ deploy_password }} * {{ deploy_password2 }}"
@@ -38,12 +39,13 @@
     #       - "{{ hashed_password }}"
 
    #check if params are invalid then abort below all tasks.  
-    - name: 'check that passwords match' 
-      fail: msg="Passwords are missing or do not match"
-      when: "deploy_password is not defined or deploy_password2 is not defined or deploy_password != deploy_password2" ## whatever condition you want
+    # - name: 'check that passwords match' 
+    #   fail: msg="Passwords are missing or do not match"
+    #   when: "deploy_password is not defined or deploy_password2 is not defined or deploy_password != deploy_password2" ## whatever condition you want
 
     - debug: 
         msg: 
+          - 'local key: {{ copy_local_key }}'
           - 'This would happen if the passwords are OK'
           - "Passwords are OK - proceeding..."
 
