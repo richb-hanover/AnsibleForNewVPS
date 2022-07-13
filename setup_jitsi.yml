@@ -1,0 +1,94 @@
+---
+# Run this playbook to install the Jitsi videoconferencing server
+# Install Jitsi
+# Open port 443/tcp
+# Open port 10000/udp
+#
+
+- name: Install Jitsi videoconferencing server
+  hosts: all
+  become: yes
+  gather_facts: false
+
+  vars:
+    UBUNTU_COMMON_LOGWATCH_EMAIL: "richb.hanover@gmail.com"
+    jitsi_http_port: "80"
+    jitsi_https_port: "443"
+    jitsi_udp_port: "10000"
+
+  tasks:
+ 
+    # - apt_repository:
+    #   repo: deb https://download.jitsi.org stable/
+    #   state: present
+
+    # - name: Add an Apt signing key, uses whichever key is at the URL
+    #   apt_key:
+    #   url: https://download.jitsi.org/jitsi-key.gpg.key
+    #   state: present
+
+    # - name: Update APT package cache
+    #   apt: update_cache=yes cache_valid_time=3600
+
+    # - name: Upgrade APT to the latest packages
+    #   apt: upgrade=safe
+
+#     - name: Install required packages
+#       apt: 
+#         update_cache: yes
+#         name: "{{ item }}"
+#       with_items: 
+#         - ufw
+#         - fail2ban
+#         - unattended-upgrades
+#         - logwatch
+
+#     - name: Install optional packages
+#       apt: 
+#         update_cache: yes
+#         name: "{{ item }}"
+#       with_items: 
+#         - mosh
+#         - vim
+
+# # Defaults already look good  
+# #    - name: Adjust APT update intervals
+# #      copy: src=apt_periodic dest=/etc/apt/apt.conf.d/10periodic
+
+    - name: Setup ufw
+      ufw: 
+        state: enabled 
+        policy: deny
+
+    - name: Allow Web (http) traffic
+      ufw: 
+        rule: allow 
+        port: "{{ jitsi_http_port }}"
+        proto: tcp
+
+    - name: Allow Web (https) traffic
+      ufw: 
+        rule: allow 
+        port: "{{ jitsi_https_port }}"
+        proto: tcp
+
+    - name: Allow Jitsi UDP traffic
+      ufw: 
+        rule: allow 
+        proto: udp 
+        port: "{{ jitsi_udp_port }}"
+    
+    # - name: Set up Postfix to relay mail
+    #   debconf: name=postfix
+    #            question='{{ item.question }}'
+    #            value='{{ item.value }}'
+    #            vtype='{{ item.vtype }}'
+    #   with_items:
+    #     - { question: 'postfix/mailname', value: '{{ inventory_hostname }}', vtype: 'string' }
+    #     - { question: 'postfix/main_mailer_type', value: 'Internet Site', vtype: 'string' }
+
+    # - name: Email log summary daily
+    #   lineinfile: dest=/etc/cron.daily/00logwatch
+    #               regexp="^/usr/sbin/logwatch"
+    #               line="/usr/sbin/logwatch --output mail --mailto {{ UBUNTU_COMMON_LOGWATCH_EMAIL }} --detail high"
+    #               state=present create=yes

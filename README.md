@@ -13,7 +13,6 @@ This makes it convenient to apply the same configuration to multiple computers i
 The original idea for these "new VPS" scripts came from Ryan Eschinger's gist at [https://gist.github.com/ryane/e0ea8e4a75b140bf799f](https://gist.github.com/ryane/e0ea8e4a75b140bf799f) 
 Regrettably, that playbook seems to have been broken by non-backward-compatible changes to Ansible.
 
-
 ## Install Ansible
 
 The [Ansible Get Started](https://www.ansible.com/resources/get-started) page
@@ -27,8 +26,11 @@ It directs the target computer(s) to create a `deploy` user,
 set up proper sudo access with your public key, 
 force ssh public key logins (no passwords permitted),
 and disable root logins. 
-Since it doesn't rely on public keys for this initial login, you will be prompted for the root password (this one time only). 
-You will also be prompted to enter a *sudo* password to be used with the `deploy` account.
+Since it doesn't rely on public keys for this initial login,
+you will be prompted for the root password
+because of the -k option (this one time only). 
+You will also be prompted to enter a *sudo* password
+to be used with the `deploy` account.
 
 *Note:* If you see an error message mentioning "host fingerprint", you should `ssh root@hostname` one time. 
 You don't even need to log in - just make the SSH connection and accept the fingerprint for the target machine. 

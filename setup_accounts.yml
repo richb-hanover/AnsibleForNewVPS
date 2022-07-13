@@ -26,9 +26,13 @@
 #
 # To run the script, enter the following command:
 #
-# ansible-playbook -i "hostname," setup_accounts.yml -k  
+# ansible-playbook -i "hostname," setup_accounts.yml -k [ -e ansible_user=other_user ]
 #
 # Substitute the hostname as needed (keep the trailing comma (",").
+# 
+# Optionally, use other_user if you want to log in as someone other than "root".
+# THIS HAS NEVER BEEN TESTED, as desirable as it may seem. 15Feb2021 -reb
+# 
 # You will be prompted to enter the root password, then you will be
 #   prompted to enter a password (twice) for the 'deploy' user.
 #

@@ -1,7 +1,7 @@
 # Test Playbook - used to investigate Ansible commands, modules, variables
 
 # Run with:
-# ansible-playbook test_playbook.yml -i "atl3.richb-hanover.com," --ask-become-pass -u deploy
+# ansible-playbook test_playbook.yml -i "atl3.richb-hanover.com," --ask-become-pass -e ansible_user=deploy
 
 # To run locally (without testing any target, comment out the "remote host" section and invoke with:
 # ansible-playbook test_playbook.yml
@@ -14,6 +14,7 @@
  - name: Test Playbook locally
    hosts: localhost # all 
    gather_facts: no 
+   remote_user: root
 
    vars_prompt:
     - name: deploy_password
@@ -48,6 +49,9 @@
           - 'local key: {{ copy_local_key }}'
           - 'This would happen if the passwords are OK'
           - "Passwords are OK - proceeding..."
+    - debug:
+        msg:
+          - 'ansible user: {{ansible_user}}'
 
     # - debug:
     #     msg: System {{ inventory_hostname }} has nodename {{ ansible_facts['nodename'] }}

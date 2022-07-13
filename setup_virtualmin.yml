@@ -1,0 +1,40 @@
+---
+# From https://www.vultr.com/docs/how-to-deploy-multiple-wordpress-sites-using-virtualmin-and-ansible-on-ubuntu-16-04
+
+# This playbook sets up Virtualmin on a server. It might be useful for upgrading Virtualmin as well
+# Unknown as to whether it installs Webmin as well.
+#
+# 
+# ansible-playbook -i "hostname," setup_virtualmin.yml --ask-become-pass -u deploy
+
+- name: download virtualmin install script
+  get_url: >
+    url=http://software.virtualmin.com/gpl/scripts/install.sh
+    dest=/root/install.sh
+    mode=0755
+
+- name: virtualmin install (takes around 10 mins) you can see progress using $ sudo tail -f /root/virtualmin-install.log
+  tags: non-idem
+  shell: ~/install.sh --force --hostname {{ hostname }} --minimal --yes
+  args:
+    chdir: /root
+
+- name: temp stop mysql
+  service:
+    name: mysql
+    state: stopped
+
+- name: change owner (and group) of mysqld dir
+  file:
+    path: "/var/run/mysqld"
+    state: directory
+    owner: mysql
+    group: mysql
+
+- name: virtualmin set mysql password
+  shell: virtualmin set-mysql-pass --user root --pass {{ new_password }}
+
+- name: restart mysql
+  service:
+    name: mysql
+    state: started
