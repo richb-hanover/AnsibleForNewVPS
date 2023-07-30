@@ -19,14 +19,17 @@
 #
 # To run the script, enter the following command:
 #
-# ansible-playbook -i "hostname," setup_old_account.yml -u TheAccount --ask-pass
+# ansible-playbook -i "hostname," setup_old_account.yml -u TheAccount --ask-pass --ask-become-pass
 #
-# Substitute the hostname as needed (keep the trailing comma (",").
+# Substitute the hostname/IP address as needed (keep the trailing comma (",").
 # 
-# You will be prompted for the account and password.
+# Change "TheAccount" for the desired account name; 
+# 
+# You will be prompted both for the SSH password 
+#   and the "become password" (used for sudo)
 #
 # If you see "Please add this host's fingerprint to your known_hosts file"
-#   you need to ssh root@hostname one time to set the fingerprint. 
+#   you need to ssh root@hostname (one time) to set the fingerprint. 
 #   Then re-run the ansible-playbook command (above)
 # 
 # ----------------
@@ -52,7 +55,7 @@
 
 - name: install ssh key using -u account and --ask-pass; configure other options
   hosts: all
-  # remote_user: ubuntu2
+  # remote_user: ubuntu
   become: yes
   gather_facts: no
 
