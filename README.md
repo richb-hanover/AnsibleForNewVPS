@@ -6,12 +6,15 @@ The playbooks set up a `deploy` account that has sudo ability, and then rely on 
 This is best practice for managing a fleet (or even a couple) of computers that you want to keep updated and synchronized.
 
 Ansible runs on your "control computer" (your laptop/desktop) and configures one or more "target computers".
-No special software need be installed on the target:
+No special software is required on the target:
 Ansible connects via SSH and invokes commands on the target. 
 This makes it convenient to apply the same configuration to multiple computers in the "inventory".
 
 The original idea for these "new VPS" scripts came from Ryan Eschinger's gist at [https://gist.github.com/ryane/e0ea8e4a75b140bf799f](https://gist.github.com/ryane/e0ea8e4a75b140bf799f) 
 Regrettably, that playbook seems to have been broken by non-backward-compatible changes to Ansible.
+
+The "new server" script was created by hand, collecting info from various sources on the Internet.
+The lion's share of the "existing server" script came from ChatGPT. It needed a bunch of refinements though.
 
 ## Install Ansible
 
@@ -19,7 +22,7 @@ The [Ansible Get Started](https://www.ansible.com/resources/get-started) page
 tells how to install Ansible on your laptop/desktop (the control computer).
 There are installers for Linux, Windows, macOS.
 
-## Set Up Accounts on Target Server
+## Set up `deploy` account on a new server
 
 Run this playbook (on your control computer) *one time* for every new VPS server. 
 It directs the target computer(s) to create a `deploy` user, 
@@ -40,7 +43,20 @@ Then re-run the command below:
 ansible-playbook -i "hostname," setup_accounts.yml -k
 ```
 
-## Set Up Packages on Target Server
+## Set up account on an existing server
+
+If you have a server that already has a SSH login, but you want to ensure that it uses your SSH key and has the other SSH Hygiene (no root login, no password logins, sudo access), use this playbook. Specify:
+ 
+- `-u` the account to update
+- Enter the SSH password and the sudo password when prompted
+
+```
+ansible-playbook -i "hostname," setup_old_account.yml \
+-u TheAccount --ask-pass --ask-become-pass
+
+```
+
+## Set up packages on target server
 
 This playbook directs the `deploy` user to set up the remainder of the basic packages needed by a VPS.
 Currently, the following packages are installed/configured:
