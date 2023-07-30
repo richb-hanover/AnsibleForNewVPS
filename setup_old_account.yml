@@ -1,0 +1,91 @@
+---
+
+##############################################################
+#
+# setup_old_account.yml
+#
+# This Ansible playbook updates an "old" existing account" on a server 
+#    for good "login hygiene". It performs the following tasks:
+#
+#  1. Request a account name for logging into the target server
+#       (get a prompt for the password)
+#  2. Log into the target server using those credentials
+#  3. Install the SSH public key from your account/home directory
+#  4. Add the account name to /etc/sudoers to enable sudo access
+#  5. Disallow password login for all accounts
+#  6. Disallow root ssh access
+# 
+# ----------------
+#
+# To run the script, enter the following command:
+#
+# ansible-playbook -i "hostname," setup_old_account.yml -u TheAccount --ask-pass
+#
+# Substitute the hostname as needed (keep the trailing comma (",").
+# 
+# You will be prompted for the account and password.
+#
+# If you see "Please add this host's fingerprint to your known_hosts file"
+#   you need to ssh root@hostname one time to set the fingerprint. 
+#   Then re-run the ansible-playbook command (above)
+# 
+# ----------------
+#
+# Copyright (c) 2023 Rich Brown
+# Blueberry Hill Software 
+# rich.brown@blueberryhillsoftware.com
+# GPL v2 - use it, enjoy it, and let me know if it helps!
+#
+# Provenance: 
+#   I was inspired by the setup_accounts.yml playbook that I 
+#   laboriously created by hand, cribbing from many examples
+#   on the Internet.
+#   I used ChatGPT to create this playbook, using this prompt:
+#     "make me an Ansible playbook that logs into the target server
+#     using the -u account and --ask-pass , and installs the SSH public key
+#     from my account/home directory, adds the account to /etc/sudoers
+#     to enable sudo access, disallows password login for all
+#     accounts, disallows root ssh access"
+#   Thanks, ChatGPT!
+#   
+##############################################################
+
+- name: install ssh key using -u account and --ask-pass; configure other options
+  hosts: all
+  # remote_user: ubuntu2
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Install SSH public key from the current user's home directory
+      authorized_key:
+        user: "{{ ansible_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: Add the specified user to sudoers with NOPASSWD access
+      lineinfile:
+        dest: /etc/sudoers
+        regexp: '^{{ ansible_user }}\s'
+        line: "{{ ansible_user }} ALL=(ALL) NOPASSWD:ALL"
+        state: present
+        validate: 'visudo -cf %s'
+
+    - name: Disallow password login for all accounts
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Disallow root SSH access
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Restart SSH service
+      service:
+        name: sshd
+        state: restarted
