@@ -15,35 +15,35 @@
 #  6. Disallow root ssh access
 #  7. (Leave ssh port set to default of 22 - commented out)
 #
-# The script ssh's into the host and uses the root password for 
+# The script ssh's into the host and uses the root password for
 #   authentication. It can never be re-run on the host because
 #   passwords and root access are both disallowed.
 #
 # You only need to run this playbook one time for a new VPS. After that
 #   all future connections to the host should use the 'deploy' user.
-# 
+#
 # ----------------
 #
 # To run the script, enter the following command:
 #
-# ansible-playbook -i "hostname," setup_accounts.yml -k [ -e ansible_user=other_user ]
+# ansible-playbook -i "hostname," setup_accounts.yml -k
 #
-# Substitute the hostname as needed (keep the trailing comma (",").
-# 
-# Optionally, use other_user if you want to log in as someone other than "root".
-# THIS HAS NEVER BEEN TESTED, as desirable as it may seem. 15Feb2021 -reb
-# 
+# OPTIONS:
+#  * Substitute the hostname as needed (keep the trailing comma (",").
+#  * If there's already a sudo user, append -e ansible_user=other_user
+#     (Tested one-of-one time with RPi4)
+#
 # You will be prompted to enter the root password, then you will be
 #   prompted to enter a password (twice) for the 'deploy' user.
 #
 # If you see "Please add this host's fingerprint to your known_hosts file"
-#   you need to ssh root@hostname one time to set the fingerprint. 
+#   you need to ssh root@hostname one time to set the fingerprint.
 #   Then re-run the ansible-playbook command (above)
-# 
+#
 # ----------------
 #
-# Copyright (c) 2020 Rich Brown
-# Blueberry Hill Software 
+# Copyright (c) 2020-2023 Rich Brown
+# Blueberry Hill Software
 # rich.brown@blueberryhillsoftware.com
 # GPL v2 - use it, enjoy it, and let me know if it helps!
 #
@@ -52,68 +52,76 @@
 # referred from http://jedelman.com/home/server-bootstrap-prep-with-ansible/
 # Seasoned with info from Ryan Eschinger's first-time setup
 # Those playbooks needed to be refreshed for the (current) Ansible 2.9 syntax
-# Tested with Ansible 2.9.6 - 6Apr2020 
+# Tested with Ansible 2.9.6 - 6Apr2020
 #
 ##############################################################
 
 - name: Set Up Accounts on a New Host (First run - never again)
   hosts: all
-  gather_facts: no
+  gather_facts: false
   remote_user: root
+  become: true
 
   vars_prompt:
     - name: deploy_password
       prompt: "What is the password for the 'deploy' user?"
-      private: yes
+      private: true
     - name: deploy_password2
       prompt: "  Enter the 'deploy' password one more time"
-      private: yes
+      private: true
 
   vars:
-      ubuntu_common_deploy_user_name: deploy
-      hashed_password:  "{{ deploy_password | password_hash('sha512') }}"
-      copy_of_my_ssh_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-#     ubuntu_common_ssh_port: 22
+    ubuntu_common_deploy_user_name: deploy
+    hashed_password: "{{ deploy_password | password_hash('sha512') }}"
+    my_ssh_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    # ubuntu_common_ssh_port: 22
 
   tasks:
 
-   #check if params are valid: abort the remaining tasks if not
-  - assert: 
-      that: 
-        - deploy_password is defined
-        - deploy_password2 is defined
-        - deploy_password == deploy_password2
-      success_msg: "Passwords are OK"
-      fail_msg: "Passwords are missing or do not match"
+    # check if params are valid: abort the remaining tasks if not
+    - assert:
+        that:
+          - deploy_password is defined
+          - deploy_password2 is defined
+          - deploy_password == deploy_password2
+        success_msg: "Passwords are OK"
+        fail_msg: "Passwords are missing or do not match"
 
-  - name: 'Add deploy user'
-    user: name={{ ubuntu_common_deploy_user_name }} password="{{ hashed_password }}" shell=/bin/bash
+    - name: Show ansible_user variable
+      debug:
+        msg: "The remote user is {{ ansible_user }}"
 
-  - name: 'Add authorized key taken from HOME public key'
-    authorized_key:
-      user: deploy
-      state: present
-      key: "{{ copy_of_my_ssh_key }}"
+    - name: 'Add deploy user'
+      user:
+        name: "{{ubuntu_common_deploy_user_name}}"
+        password: "{{ hashed_password }}"
+        shell: /bin/bash
 
-  - name: 'Add deploy user to sudoers'
-    lineinfile: dest=/etc/sudoers
+    - name: 'Add authorized key taken from HOME public key'
+      authorized_key:
+        user: deploy
+        state: present
+        key: "{{ my_ssh_key }}"
+
+    - name: 'Add deploy user to sudoers'
+      lineinfile: dest=/etc/sudoers
                   regexp="{{ ubuntu_common_deploy_user_name }} ALL"
                   line="{{ ubuntu_common_deploy_user_name }} ALL=(ALL) ALL"
                   state=present
 
-  - name: 'Disallow password authentication'
-    lineinfile: dest=/etc/ssh/sshd_config
+    - name: 'Disallow password authentication'
+      lineinfile: dest=/etc/ssh/sshd_config
                   regexp="^PasswordAuthentication"
                   line="PasswordAuthentication no"
                   state=present
-    notify: Restart ssh
+      notify: Restart ssh
 
-  - name: 'Disallow root SSH access'
-    lineinfile: dest=/etc/ssh/sshd_config
+    - name: 'Disallow root SSH access'
+      lineinfile: dest=/etc/ssh/sshd_config
                   regexp="^PermitRootLogin"
                   line="PermitRootLogin no"
                   state=present
-    notify: Restart ssh
+      notify: Restart ssh
 
   # - name: 'Change ssh port'
   #   lineinfile: dest=/etc/ssh/sshd_config

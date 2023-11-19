@@ -10,7 +10,7 @@ No special software is required on the target:
 Ansible connects via SSH and invokes commands on the target. 
 This makes it convenient to apply the same configuration to multiple computers in the "inventory".
 
-The original idea for these "new VPS" scripts came from Ryan Eschinger's gist at [https://gist.github.com/ryane/e0ea8e4a75b140bf799f](https://gist.github.com/ryane/e0ea8e4a75b140bf799f) 
+The original idea for these "new VPS" scripts came from Ryan Eschinger's [First Five Minutes on a New Server](https://ryaneschinger.com/blog/securing-a-server-with-ansible/) which was revised to the gist at [https://gist.github.com/ryane/e0ea8e4a75b140bf799f](https://gist.github.com/ryane/e0ea8e4a75b140bf799f) 
 Regrettably, that playbook seems to have been broken by non-backward-compatible changes to Ansible.
 
 The "new server" script was created by hand, collecting info from various sources on the Internet.
@@ -43,16 +43,16 @@ Then re-run the command below:
 ansible-playbook -i "hostname," setup_accounts.yml -k
 ```
 
-## Set up account on an existing server
+## Set up account on an _existing_ server
 
-If you have a server that already has a SSH login, but you want to ensure that it uses your SSH key and has the other SSH Hygiene (no root login, no password logins, sudo access), use this playbook. Specify:
+If you have a server that already has a SSH login, but you want to ensure that it uses your SSH key and has the other SSH hygiene (no root login, no password logins, sudo access), use this playbook. 
  
-- `-u` the account to update
+- Add `-e ansible_user=other_user` to the command
 - Enter the SSH password and the sudo password when prompted
 
 ```
 ansible-playbook -i "hostname," setup_old_account.yml \
--u TheAccount --ask-pass --ask-become-pass
+   -e ansible_user=TheAccount --ask-pass --ask-become-pass
 
 ```
 
