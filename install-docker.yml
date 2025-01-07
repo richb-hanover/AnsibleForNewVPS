@@ -1,64 +1,54 @@
 ---
 # Install Docker-CE from Ansible
-# https://www.digitalocean.com/community/tutorials/how-to-use-ansible-to-install-and-set-up-docker-on-ubuntu-20-04
+# https://www.devopstricks.in/installing-docker-using-ansible-playbook-on-ubuntu/
+# with tweaks for 24.04 (noble)
 
-- hosts: all
-  become: true
-  vars:
-    container_count: 4
-    default_container_name: docker
-    default_container_image: ubuntu
-    default_container_command: sleep 1d
+# After running this command, log out from any ssh session and log back in
+# then `docker ps` should work as expected
+
+- name: Install Docker on Ubuntu
+  hosts: all
+  become: yes  # Run tasks with sudo
 
   tasks:
-    - name: Install aptitude
+    - name: Update apt package cache
       apt:
-        name: aptitude
-        state: latest
-        update_cache: true
+        update_cache: yes
 
-    - name: Install required system packages
+    - name: Install dependencies
       apt:
-        pkg:
+        name:
           - apt-transport-https
           - ca-certificates
           - curl
           - software-properties-common
-          - python3-pip
-          - virtualenv
-          - python3-setuptools
-        state: latest
-        update_cache: true
 
-    - name: Add Docker GPG apt Key
+    - name: Add Docker GPG key
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
 
-    - name: Add Docker Repository
+    - name: Add Docker APT repository
       apt_repository:
         repo: deb https://download.docker.com/linux/ubuntu focal stable
         state: present
 
-    - name: Update apt and install docker-ce
+    - name: Update apt package cache (again)
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
       apt:
         name: docker-ce
-        state: latest
-        update_cache: true
-
-    - name: Install Docker Module for Python
-      pip:
-        name: docker
-
-    - name: Pull default Docker image
-      community.docker.docker_image:
-        name: "{{ default_container_image }}"
-        source: pull
-
-    - name: Create default containers
-      community.docker.docker_container:
-        name: "{{ default_container_name }}{{ item }}"
-        image: "{{ default_container_image }}"
-        command: "{{ default_container_command }}"
         state: present
-      with_sequence: count={{ container_count }}
+
+    - name: Add user to the docker group
+      user:
+        name: "{{ ansible_ssh_user }}"
+        groups: docker
+        append: yes
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
