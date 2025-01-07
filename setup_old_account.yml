@@ -4,11 +4,10 @@
 #
 # setup_old_account.yml
 #
-# This Ansible playbook updates an "old" existing account" on a server 
+# This Ansible playbook updates an existing sudo account on a server 
 #    for good "login hygiene". It performs the following tasks:
 #
-#  1. Request a account name for logging into the target server
-#       (get a prompt for the password)
+#  1. Request the sudo account name and prompt for the password
 #  2. Log into the target server using those credentials
 #  3. Install the SSH public key from your account/home directory
 #  4. Add the account name to /etc/sudoers to enable sudo access
@@ -89,6 +88,6 @@
         state: present
 
     - name: Restart SSH service
-      service:
-        name: sshd
+      ansible.builtin.service:
+        name: ssh
         state: restarted

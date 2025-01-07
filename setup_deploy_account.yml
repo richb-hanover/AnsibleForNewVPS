@@ -2,12 +2,12 @@
 
 ##############################################################
 #
-# setup_accounts.yml
+# setup_deploy_account.yml
 #
 # This Ansible playbook configures the accounts for an initial
 #   connection to a newly provisioned VPS. It performs the following tasks:
 #
-#  1. Log into the target server using the root password (not public key)
+#  1. Log in as root to the target server using the root password (not public key)
 #  2. Create a 'deploy' user
 #  3. Install the SSH public key from your account/home directory
 #  4. Add 'deploy' to /etc/sudoers to enable sudo access
@@ -26,12 +26,13 @@
 #
 # To run the script, enter the following command:
 #
-# ansible-playbook -i "hostname," setup_accounts.yml -k
+# ansible-playbook -i "hostname," setup_deploy_account.yml -k
 #
 # OPTIONS:
 #  * Substitute the hostname as needed (keep the trailing comma (",").
-#  * If there's already a sudo user, append -e ansible_user=other_user
-#     (Tested one-of-one time with RPi4)
+#  * If there's already a non-root sudo user, append 
+#
+#               -e ansible_user=other_user
 #
 # You will be prompted to enter the root password, then you will be
 #   prompted to enter a password (twice) for the 'deploy' user.
@@ -42,7 +43,7 @@
 #
 # ----------------
 #
-# Copyright (c) 2020-2023 Rich Brown
+# Copyright (c) 2020-2025 Rich Brown
 # Blueberry Hill Software
 # rich.brown@blueberryhillsoftware.com
 # GPL v2 - use it, enjoy it, and let me know if it helps!
@@ -53,6 +54,7 @@
 # Seasoned with info from Ryan Eschinger's first-time setup
 # Those playbooks needed to be refreshed for the (current) Ansible 2.9 syntax
 # Tested with Ansible 2.9.6 - 6Apr2020
+# Tested with Ansible-playbook 2.17.4 - 6Jan2025
 #
 ##############################################################
 

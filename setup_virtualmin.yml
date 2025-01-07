@@ -7,34 +7,45 @@
 # 
 # ansible-playbook -i "hostname," setup_virtualmin.yml --ask-become-pass -u deploy
 
-- name: download virtualmin install script
-  get_url: >
-    url=http://software.virtualmin.com/gpl/scripts/install.sh
-    dest=/root/install.sh
-    mode=0755
+- name: Install virtualmin 
+  hosts: all
+  become: yes
+  become_user: root
 
-- name: virtualmin install (takes around 10 mins) you can see progress using $ sudo tail -f /root/virtualmin-install.log
-  tags: non-idem
-  shell: ~/install.sh --force --hostname {{ hostname }} --minimal --yes
-  args:
-    chdir: /root
+  vars:
+    hostname: atl.richb-hanover.com
+    new_password: kung-flashcubes-mournfully
 
-- name: temp stop mysql
-  service:
-    name: mysql
-    state: stopped
+  tasks:                 # Main tasks section
+    - name: download virtualmin installer script
+      get_url: 
+        url: https://software.virtualmin.com/gpl/scripts/install.sh
+        dest: /root/install.sh
+        mode: '0755'
 
-- name: change owner (and group) of mysqld dir
-  file:
-    path: "/var/run/mysqld"
-    state: directory
-    owner: mysql
-    group: mysql
+    - name: virtualmin install (takes around 10 mins). Watch progress using `sudo tail -f /root/virtualmin-install.log`
+      tags: non-idem
+      shell: /root/install.sh --force --hostname {{ hostname }} --minimal --yes
+      args:
+        chdir: /root
 
-- name: virtualmin set mysql password
-  shell: virtualmin set-mysql-pass --user root --pass {{ new_password }}
+# The stuff above seemed to work, although the `install.sh` task never completed in the playbook
+    # - name: temp stop mysql
+    #   service:
+    #     name: mysql
+    #     state: stopped
 
-- name: restart mysql
-  service:
-    name: mysql
-    state: started
+    # - name: change owner (and group) of mysqld dir
+    #   file:
+    #     path: "/var/run/mysqld"
+    #     state: directory
+    #     owner: mysql
+    #     group: mysql
+
+    # - name: virtualmin set mysql password
+    #   shell: virtualmin set-mysql-pass --user root --pass {{ new_password }}
+
+    # - name: restart mysql
+    #   service:
+    #     name: mysql
+    #     state: started

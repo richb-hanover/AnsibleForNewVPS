@@ -51,6 +51,7 @@
       with_items: 
         - mosh
         - vim
+        - netperf
 
 # Defaults already look good  
 #    - name: Adjust APT update intervals

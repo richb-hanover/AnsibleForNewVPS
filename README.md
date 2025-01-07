@@ -1,7 +1,7 @@
 # README.md
 
 These [Ansible playbooks](https://www.ansible.com/resources/get-started)
-configure a new server with default accounts and an initial set of packages.
+configure a new server.
 The playbooks set up a `deploy` account that has sudo ability, and then rely on that account (alone) for further configuration.
 This is best practice for managing a fleet (or even a couple) of computers that you want to keep updated and synchronized.
 
@@ -16,7 +16,7 @@ Regrettably, that playbook seems to have been broken by non-backward-compatible 
 The "new server" script was created by hand, collecting info from various sources on the Internet.
 The lion's share of the "existing server" script came from ChatGPT. It needed a bunch of refinements though.
 
-## Install Ansible
+## Install Ansible on your "control computer"
 
 The [Ansible Get Started](https://www.ansible.com/resources/get-started) page
 tells how to install Ansible on your laptop/desktop (the control computer).
@@ -24,31 +24,41 @@ There are installers for Linux, Windows, macOS.
 
 ## Set up `deploy` account on a new server
 
-Run this playbook (on your control computer) *one time* for every new VPS server. 
+Run this playbook (on your control computer)
+*one time* for every new VPS server. 
 It directs the target computer(s) to create a `deploy` user, 
 set up proper sudo access with your public key, 
 force ssh public key logins (no passwords permitted),
-and disable root logins. 
+and disable root logins.
+
 Since it doesn't rely on public keys for this initial login,
 you will be prompted for the root password
 because of the -k option (this one time only). 
 You will also be prompted to enter a *sudo* password
 to be used with the `deploy` account.
 
-*Note:* If you see an error message mentioning "host fingerprint", you should `ssh root@hostname` one time. 
+**Note: This script defaults to using the root log in.**
+Append `-e ansible_user=other_user`
+  substituting `other_user` in place of `root`
+
+```
+ansible-playbook -i "hostname," setup_deploy_account.yml -k
+-- or, if they're not "root"... --
+ansible-playbook -i "hostname," setup_deploy_account.yml -k -e ansible_user=other_user
+```
+
+If you see an error message mentioning "host fingerprint", you should `ssh root@hostname` one time. 
 You don't even need to log in - just make the SSH connection and accept the fingerprint for the target machine. 
-Then re-run the command below:
+Then re-run the command below.
 
-```
-ansible-playbook -i "hostname," setup_accounts.yml -k
-```
+## Updating existing _sudo_ user account
 
-## Set up account on an _existing_ server
-
-If you have a server that already has a SSH login, but you want to ensure that it uses your SSH key and has the other SSH hygiene (no root login, no password logins, sudo access), use this playbook. 
- 
-- Add `-e ansible_user=other_user` to the command
-- Enter the SSH password and the sudo password when prompted
+For a server that already has a sudo account (not named `root`),
+you can change that account to use your SSH key
+and set up other SSH
+hygiene (no root login, no password logins, sudo access).
+Use the _setup\_old\_account.yml_ script and
+enter the SSH password and the sudo password when prompted.
 
 ```
 ansible-playbook -i "hostname," setup_old_account.yml \
